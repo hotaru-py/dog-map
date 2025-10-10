@@ -18,12 +18,12 @@
     "name": "Bella",
     "breed": "Labrador",
     "location": {
-      "lat": 12.75647,
-      "lng": 80.20154
+      "lat": 12.75352,
+      "lng": 80.19124
     },
     "photos": [
-      "https://images.unsplash.com/photo-1617644387865-c636ae77dce3?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1600804931749-2da4ce26c869?w=600&h=400&fit=crop"
+      "https://images.unsplash.com/photo-1591769225440-811ad7d6eab3?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1558788353-f76d92427f16?w=600&h=400&fit=crop"
     ],
     "description": "Sweet labrador who enjoys swimming and long walks."
   },
@@ -32,8 +32,8 @@
     "name": "Charlie",
     "breed": "Beagle",
     "location": {
-      "lat": 12.74648,
-      "lng": 80.19154
+      "lat": 12.74968,
+      "lng": 80.19354
     },
     "photos": [
       "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=600&h=400&fit=crop",
@@ -46,8 +46,8 @@
     "name": "Luna",
     "breed": "Husky",
     "location": {
-      "lat": 12.75947,
-      "lng": 80.19954
+      "lat": 12.75482,
+      "lng": 80.19854
     },
     "photos": [
       "https://images.unsplash.com/photo-1568572933382-74d440642117?w=600&h=400&fit=crop",
@@ -60,12 +60,12 @@
     "name": "Cooper",
     "breed": "Corgi",
     "location": {
-      "lat": 12.74847,
-      "lng": 80.19854
+      "lat": 12.75012,
+      "lng": 80.20154
     },
     "photos": [
-      "https://images.unsplash.com/photo-1612536981610-2aaaeee7a65f?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=600&h=400&fit=crop"
+      "https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=600&h=400&fit=crop"
     ],
     "description": "Adorable corgi with short legs and a big personality!"
   },
@@ -74,7 +74,7 @@
     "name": "Rocky",
     "breed": "German Shepherd",
     "location": {
-      "lat": 12.75347,
+      "lat": 12.75234,
       "lng": 80.19454
     },
     "photos": [
@@ -88,12 +88,12 @@
     "name": "Daisy",
     "breed": "Poodle",
     "location": {
-      "lat": 12.75047,
-      "lng": 80.20054
+      "lat": 12.75147,
+      "lng": 80.20254
     },
     "photos": [
-      "https://images.unsplash.com/photo-1616870716835-e4a0f0e56334?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=600&h=400&fit=crop"
+      "https://images.unsplash.com/photo-1587402092301-725e37c70fd8?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1534361960057-19889db9621e?w=600&h=400&fit=crop"
     ],
     "description": "Elegant poodle with a playful spirit."
   },
@@ -102,7 +102,7 @@
     "name": "Bruno",
     "breed": "Bulldog",
     "location": {
-      "lat": 12.76047,
+      "lat": 12.75415,
       "lng": 80.19654
     },
     "photos": [
@@ -110,5 +110,33 @@
       "https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=600&h=400&fit=crop"
     ],
     "description": "Gentle bulldog who loves naps and cuddles."
+  },
+  {
+    "id": 9,
+    "name": "Milo",
+    "breed": "Border Collie",
+    "location": {
+      "lat": 12.74865,
+      "lng": 80.19954
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=400&fit=crop"
+    ],
+    "description": "Smart and energetic border collie who loves to herd."
+  },
+  {
+    "id": 10,
+    "name": "Zoe",
+    "breed": "Shih Tzu",
+    "location": {
+      "lat": 12.75512,
+      "lng": 80.20054
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&h=400&fit=crop"
+    ],
+    "description": "Fluffy Shih Tzu with a gentle and loving nature."
   }
 ]
