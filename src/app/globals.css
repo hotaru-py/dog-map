@@ -1,8 +1,23 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.custom-marker {
+  background: none;
+  border: none;
+}
+
+.custom-marker svg {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s;
+}
+
+.custom-marker:hover svg {
+  transform: scale(1.1);
 }
 
 @theme inline {
@@ -23,4 +38,50 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.custom-dog-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-dog-marker:hover {
+  z-index: 1000 !important;
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+body:has(.fixed.inset-0) .leaflet-container {
+  pointer-events: auto !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-popup-content {
+  margin: 8px;
+}
+
+.leaflet-tile-pane {
+  filter: brightness(1.05) contrast(1.1);
+}
+
+.leaflet-marker-icon {
+  transition: none !important;
+  transform: translate3d(0, 0, 0);
+}
+
+.leaflet-tile-container {
+  will-change: transform;
+}
+
+.leaflet-overlay-pane svg text {
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9),
+    0 0 6px rgba(255, 255, 255, 0.7), 1px 1px 2px rgba(0, 0, 0, 0.8);
+  font-weight: 600;
 }

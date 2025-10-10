@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "name": "Max",
+    "breed": "Golden Retriever",
+    "location": {
+      "lat": 12.75147980444429,
+      "lng": 80.19654241564324
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&h=400&fit=crop"
+    ],
+    "description": "Friendly golden retriever who loves to play fetch!"
+  },
+  {
+    "id": 2,
+    "name": "Bella",
+    "breed": "Labrador",
+    "location": {
+      "lat": 12.75647,
+      "lng": 80.20154
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1617644387865-c636ae77dce3?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1600804931749-2da4ce26c869?w=600&h=400&fit=crop"
+    ],
+    "description": "Sweet labrador who enjoys swimming and long walks."
+  },
+  {
+    "id": 3,
+    "name": "Charlie",
+    "breed": "Beagle",
+    "location": {
+      "lat": 12.74648,
+      "lng": 80.19154
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&h=400&fit=crop"
+    ],
+    "description": "Curious beagle with an amazing sense of smell."
+  },
+  {
+    "id": 4,
+    "name": "Luna",
+    "breed": "Husky",
+    "location": {
+      "lat": 12.75947,
+      "lng": 80.19954
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1568572933382-74d440642117?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1605568427561-40dd23c2acea?w=600&h=400&fit=crop"
+    ],
+    "description": "Energetic husky with beautiful blue eyes."
+  },
+  {
+    "id": 5,
+    "name": "Cooper",
+    "breed": "Corgi",
+    "location": {
+      "lat": 12.74847,
+      "lng": 80.19854
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1612536981610-2aaaeee7a65f?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=600&h=400&fit=crop"
+    ],
+    "description": "Adorable corgi with short legs and a big personality!"
+  },
+  {
+    "id": 6,
+    "name": "Rocky",
+    "breed": "German Shepherd",
+    "location": {
+      "lat": 12.75347,
+      "lng": 80.19454
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1568393691622-c7ba131d63b4?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1579562475317-y5eb8f485249?w=600&h=400&fit=crop"
+    ],
+    "description": "Loyal German Shepherd, great with families."
+  },
+  {
+    "id": 7,
+    "name": "Daisy",
+    "breed": "Poodle",
+    "location": {
+      "lat": 12.75047,
+      "lng": 80.20054
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1616870716835-e4a0f0e56334?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=600&h=400&fit=crop"
+    ],
+    "description": "Elegant poodle with a playful spirit."
+  },
+  {
+    "id": 8,
+    "name": "Bruno",
+    "breed": "Bulldog",
+    "location": {
+      "lat": 12.76047,
+      "lng": 80.19654
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=600&h=400&fit=crop"
+    ],
+    "description": "Gentle bulldog who loves naps and cuddles."
+  }
+]
