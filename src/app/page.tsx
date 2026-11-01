@@ -1,93 +1,186 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dogsData from "@/data/dogs.json";
-import { Dog } from "@/types/dog";
+import type { Dog } from "@/types/dog";
+import { features, site } from "@/config/site";
+import { useCampusData } from "@/hooks/useCampusData";
+import { getCurrentPosition, useGeolocation } from "@/hooks/useGeolocation";
+import DogSidebar from "@/components/DogSidebar";
+import DogModal from "@/components/DogModal";
+import { Toast } from "@/components/ui";
+import { Logo } from "@/components/icons";
+import type { MapStyle } from "@/components/DogMap";
 
-const dogs = dogsData as Dog[];
+const AddDogForm = dynamic(() => import("@/components/AddDogForm"));
+const ReportForm = dynamic(() => import("@/components/ReportForm"));
+const CollectionPanel = dynamic(() => import("@/components/CollectionPanel"));
 
 const DogMap = dynamic(() => import("@/components/DogMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full">
+    <div className="grid h-full place-items-center bg-stone-900">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
+        <div className="mx-auto mb-4 w-fit animate-bounce">
+          <Logo className="h-14 w-14" />
+        </div>
+        <p className="text-sm font-medium text-stone-400">Loading the map…</p>
       </div>
     </div>
   ),
 });
 
+type Panel = { kind: "add" } | { kind: "collection" } | { kind: "report"; dog: Dog | null } | null;
+
 export default function Home() {
-  const [isHeaderOpen, setIsHeaderOpen] = useState(true);
+  const { dogs, error, progress, updateProgress, toggleLike, toggleMet, addSighting, refresh } =
+    useCampusData(dogsData as Dog[]);
+  const geo = useGeolocation();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [mapStyle, setMapStyle] = useState<MapStyle>("satellite");
+  const [panel, setPanel] = useState<Panel>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  // Open a dog straight from a shared link, e.g. /?dog=3
+  useEffect(() => {
+    const id = Number(new URLSearchParams(window.location.search).get("dog"));
+    if (id) setSelectedId(id);
+  }, []);
+
+  // Keep the URL in sync so the current dog can be shared
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (selectedId == null) url.searchParams.delete("dog");
+    else url.searchParams.set("dog", String(selectedId));
+    window.history.replaceState(null, "", url);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (geo.status === "denied") showToast("Location permission is turned off");
+    else if (geo.status === "unavailable") showToast("Couldn't get your location");
+  }, [geo.status, showToast]);
+
+  useEffect(() => {
+    if (error) showToast(error);
+  }, [error, showToast]);
+
+  const handleClose = useCallback(() => setSelectedId(null), []);
+  const toggleStyle = useCallback(
+    () => setMapStyle((s) => (s === "satellite" ? "street" : "satellite")),
+    []
+  );
+  const handleLocate = useCallback(() => {
+    if (geo.status === "active" || geo.status === "locating") geo.stop();
+    else geo.start();
+  }, [geo]);
+
+  const selectedDog = dogs.find((d) => d.id === selectedId) ?? null;
+  const metIds = useMemo(() => new Set(Object.keys(progress.met).map(Number)), [progress.met]);
+
+  const handleSighting = useCallback(async () => {
+    if (!selectedDog) return;
+    try {
+      const here = await getCurrentPosition();
+      const [[s, w], [n, e]] = site.map.bounds;
+      if (here.lat < s || here.lat > n || here.lng < w || here.lng > e) {
+        showToast("You seem to be off campus, so the sighting wasn't logged");
+        return;
+      }
+      await addSighting(selectedDog.id, here);
+      showToast(`Thanks! ${selectedDog.name}'s location is updated`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't log the sighting");
+    }
+  }, [selectedDog, addSighting, showToast]);
 
   return (
-    <div className="relative w-screen h-screen">
-      <div className="absolute top-4 left-4 z-[1000]">
-        <div
-          className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg shadow-xl transition-all duration-300 ${
-            isHeaderOpen ? "w-64" : "w-12"
-          }`}
-        >
-          <button
-            onClick={() => setIsHeaderOpen(!isHeaderOpen)}
-            className="w-full p-3 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            {isHeaderOpen ? (
-              <>
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
-                  🐕
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-600 dark:text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </>
-            ) : (
-              <span className="text-xl">🐕</span>
-            )}
-          </button>
+    <main className="relative h-dvh w-screen overflow-hidden">
+      <DogMap
+        dogs={dogs}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        mapStyle={mapStyle}
+        onToggleStyle={toggleStyle}
+        geo={geo}
+        onLocate={handleLocate}
+        metIds={metIds}
+      />
 
-          {isHeaderOpen && (
-            <div className="px-4 pb-4 animate-fade-in">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                Dog Map
-              </h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                Trace down campus dogs
-              </p>
-              <a
-                href="https://github.com/hotaru-py/dog-map"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                </svg>
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
+      <DogSidebar
+        dogs={dogs}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        progress={progress}
+        geo={geo}
+        onLocate={geo.start}
+        onAddDog={() => setPanel({ kind: "add" })}
+        onOpenCollection={() => setPanel({ kind: "collection" })}
+        onReport={() => setPanel({ kind: "report", dog: null })}
+      />
 
-      <DogMap dogs={dogs} />
-    </div>
+      {selectedDog && (
+        <DogModal
+          dog={selectedDog}
+          liked={progress.liked.includes(selectedDog.id)}
+          met={metIds.has(selectedDog.id)}
+          userPosition={geo.position}
+          onClose={handleClose}
+          onToggleLike={() => toggleLike(selectedDog.id)}
+          onToggleMet={() => {
+            const wasMet = metIds.has(selectedDog.id);
+            toggleMet(selectedDog.id);
+            if (!wasMet) showToast(`${selectedDog.name} added to your collection`);
+          }}
+          onReport={() => setPanel({ kind: "report", dog: selectedDog })}
+          onSighting={handleSighting}
+          onPhotoAdded={() => updateProgress((p) => ({ ...p, photos: p.photos + 1 }))}
+          onToast={showToast}
+        />
+      )}
+
+      {panel?.kind === "add" && features.submissions && (
+        <AddDogForm
+          defaultLocation={geo.position ?? { lat: site.map.center[0], lng: site.map.center[1] }}
+          onClose={() => setPanel(null)}
+          onDone={(msg) => {
+            setPanel(null);
+            showToast(msg);
+            refresh();
+          }}
+        />
+      )}
+
+      {panel?.kind === "report" && features.reports && (
+        <ReportForm
+          dog={panel.dog}
+          dogs={dogs}
+          onClose={() => setPanel(null)}
+          onDone={(msg) => {
+            setPanel(null);
+            updateProgress((p) => ({ ...p, reports: p.reports + 1 }));
+            showToast(msg);
+          }}
+        />
+      )}
+
+      {panel?.kind === "collection" && features.collection && (
+        <CollectionPanel
+          dogs={dogs}
+          progress={progress}
+          onSelect={setSelectedId}
+          onClose={() => setPanel(null)}
+        />
+      )}
+
+      <Toast message={toast} />
+    </main>
   );
 }

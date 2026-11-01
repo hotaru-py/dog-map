@@ -11,7 +11,33 @@
       "https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&h=400&fit=crop"
     ],
-    "description": "Friendly golden retriever who loves to play fetch!"
+    "description": "Friendly golden retriever who loves to play fetch!",
+    "gender": "male",
+    "age": "~4 years",
+    "temperament": [
+      "friendly",
+      "playful"
+    ],
+    "hangouts": [
+      "Main canteen",
+      "Football ground"
+    ],
+    "health": {
+      "vaccinated": true,
+      "sterilized": true,
+      "lastVetVisit": "2026-08-14"
+    },
+    "feeding": [
+      {
+        "time": "8:00 AM",
+        "place": "Main canteen",
+        "by": "Volunteers"
+      },
+      {
+        "time": "7:30 PM",
+        "place": "Hostel gate"
+      }
+    ]
   },
   {
     "id": 2,
@@ -25,7 +51,20 @@
       "https://images.unsplash.com/photo-1591769225440-811ad7d6eab3?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1558788353-f76d92427f16?w=600&h=400&fit=crop"
     ],
-    "description": "Sweet labrador who enjoys swimming and long walks."
+    "description": "Sweet labrador who enjoys swimming and long walks.",
+    "gender": "female",
+    "age": "~3 years",
+    "temperament": [
+      "calm",
+      "friendly"
+    ],
+    "hangouts": [
+      "Library steps"
+    ],
+    "health": {
+      "vaccinated": true,
+      "sterilized": true
+    }
   },
   {
     "id": 3,
@@ -39,7 +78,21 @@
       "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&h=400&fit=crop"
     ],
-    "description": "Curious beagle with an amazing sense of smell."
+    "description": "Curious beagle with an amazing sense of smell.",
+    "gender": "male",
+    "age": "~2 years",
+    "temperament": [
+      "playful",
+      "dont-feed"
+    ],
+    "hangouts": [
+      "Admin block"
+    ],
+    "health": {
+      "vaccinated": true,
+      "sterilized": false,
+      "notes": "On a diet, please don't feed"
+    }
   },
   {
     "id": 4,
@@ -53,7 +106,20 @@
       "https://images.unsplash.com/photo-1568572933382-74d440642117?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1605568427561-40dd23c2acea?w=600&h=400&fit=crop"
     ],
-    "description": "Energetic husky with beautiful blue eyes."
+    "description": "Energetic husky with beautiful blue eyes.",
+    "gender": "female",
+    "age": "~5 years",
+    "temperament": [
+      "shy",
+      "approach-slowly"
+    ],
+    "hangouts": [
+      "Girls' hostel"
+    ],
+    "health": {
+      "vaccinated": true,
+      "sterilized": true
+    }
   },
   {
     "id": 5,
@@ -67,7 +133,16 @@
       "https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=600&h=400&fit=crop"
     ],
-    "description": "Adorable corgi with short legs and a big personality!"
+    "description": "Adorable corgi with short legs and a big personality!",
+    "gender": "male",
+    "age": "~1 year",
+    "temperament": [
+      "friendly",
+      "playful"
+    ],
+    "hangouts": [
+      "Food court"
+    ]
   },
   {
     "id": 6,
@@ -81,7 +156,21 @@
       "https://images.unsplash.com/photo-1568393691622-c7ba131d63b4?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1579562475317-y5eb8f485249?w=600&h=400&fit=crop"
     ],
-    "description": "Loyal German Shepherd, great with families."
+    "description": "Loyal German Shepherd, great with families.",
+    "gender": "male",
+    "age": "~6 years",
+    "temperament": [
+      "protective",
+      "approach-slowly"
+    ],
+    "hangouts": [
+      "Main gate"
+    ],
+    "health": {
+      "vaccinated": true,
+      "sterilized": true,
+      "lastVetVisit": "2026-06-02"
+    }
   },
   {
     "id": 7,
@@ -95,7 +184,15 @@
       "https://images.unsplash.com/photo-1587402092301-725e37c70fd8?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1534361960057-19889db9621e?w=600&h=400&fit=crop"
     ],
-    "description": "Elegant poodle with a playful spirit."
+    "description": "Elegant poodle with a playful spirit.",
+    "gender": "female",
+    "age": "~2 years",
+    "temperament": [
+      "friendly"
+    ],
+    "hangouts": [
+      "Auditorium"
+    ]
   },
   {
     "id": 8,
@@ -109,7 +206,19 @@
       "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=600&h=400&fit=crop"
     ],
-    "description": "Gentle bulldog who loves naps and cuddles."
+    "description": "Gentle bulldog who loves naps and cuddles.",
+    "gender": "male",
+    "age": "~7 years",
+    "temperament": [
+      "calm"
+    ],
+    "hangouts": [
+      "Parking lot"
+    ],
+    "health": {
+      "vaccinated": true,
+      "sterilized": true
+    }
   },
   {
     "id": 9,
@@ -123,7 +232,16 @@
       "https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=400&fit=crop"
     ],
-    "description": "Smart and energetic border collie who loves to herd."
+    "description": "Smart and energetic border collie who loves to herd.",
+    "gender": "male",
+    "age": "~3 years",
+    "temperament": [
+      "playful",
+      "friendly"
+    ],
+    "hangouts": [
+      "Sports complex"
+    ]
   },
   {
     "id": 10,
@@ -137,6 +255,15 @@
       "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&h=400&fit=crop",
       "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&h=400&fit=crop"
     ],
-    "description": "Fluffy Shih Tzu with a gentle and loving nature."
+    "description": "Fluffy Shih Tzu with a gentle and loving nature.",
+    "gender": "female",
+    "age": "~4 years",
+    "temperament": [
+      "calm",
+      "shy"
+    ],
+    "hangouts": [
+      "Library steps"
+    ]
   }
 ]
