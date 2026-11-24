@@ -1,27 +1,35 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
+@import "maplibre-gl/dist/maplibre-gl.css";
 
-:root {
-  --background: #f7f5f2;
-  --foreground: #1c1917;
-  --brand: #f97316;
-  --brand-strong: #ea580c;
+/* Trailhead identity: pine + blaze on mist, Bricolage Grotesque + Inter. Logo: Pawpass ticket in sunflower. */
+@theme {
+  --color-pine: #13392d;
+  --color-pine-2: #1c4a3b;
+  --color-blaze: #f2541b;
+  --color-blaze-2: #d8450f;
+  --color-sun: #ffc83d;
+  --color-lichen: #c4d7a6;
+  --color-mist: #eef2eb;
+  --color-ink: #13261f;
+  --color-muted: #5d6b62;
+  --color-line: #dce3d7;
+  --color-soft: #e2eadb;
+  --color-ok: #2f9c5a;
+  --color-warn: #e09a12;
+  --color-stale: #9ca59e;
+  --color-bad: #c2413a;
+  --color-locate: #2f7bff;
+
+  --shadow-card: 0 1px 2px rgb(19 38 31 / 0.08), 0 12px 26px -14px rgb(19 38 31 / 0.35);
+  --shadow-soft: 0 2px 6px rgb(19 38 31 / 0.16);
+  --shadow-up: 0 -12px 30px -18px rgb(19 38 31 / 0.4);
+
+  --radius-card: 16px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-brand: var(--brand);
-  --color-brand-strong: var(--brand-strong);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0a09;
-    --foreground: #fafaf9;
-  }
+  --font-display: var(--font-bricolage), "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
 html,
@@ -30,313 +38,119 @@ body {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--color-mist);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ---------- Surfaces ---------- */
-
-.glass {
-  background: rgb(255 255 255 / 0.82);
-  backdrop-filter: blur(16px) saturate(1.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  border: 1px solid rgb(255 255 255 / 0.6);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -8px rgb(0 0 0 / 0.25);
+:focus-visible {
+  outline: 2px solid var(--color-blaze);
+  outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .glass {
-    background: rgb(28 25 23 / 0.8);
-    border-color: rgb(255 255 255 / 0.08);
-  }
+.font-display {
+  letter-spacing: -0.015em;
 }
 
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(120 113 108 / 0.4) transparent;
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* ---------- Animations ---------- */
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes sheet-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes pop {
+  from { transform: scale(0.85); }
+  to { transform: scale(1); }
 }
+.anim-sheet { animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+.anim-fade { animation: fade 0.2s ease-out; }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
-}
-
-.animate-sheet {
-  animation: slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@media (min-width: 768px) {
-  .animate-sheet {
-    animation-name: slide-in-right;
-  }
-}
-
-/* ---------- Dog markers ---------- */
-
+/* ---------- Map pins ---------- */
+/* MapLibre positions .dog-marker (it adds .maplibregl-marker); never restyle its position. */
 .dog-marker {
-  background: transparent !important;
-  border: none !important;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
-
+/* Only the round avatar takes up space, so the marker's centre anchor is always the avatar's centre. */
 .dog-pin {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  transform-origin: 50% 100%;
-  transition: transform 0.2s ease;
-}
-
-/* Drop-in only on first load; markers re-added later (zoom, clustering) appear instantly */
-.is-intro .dog-pin {
-  animation: pin-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.dog-pin.is-selected {
-  animation: pin-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes pin-pop {
-  from {
-    transform: scale(0.8);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-.dog-marker:hover .dog-pin {
-  transform: translateY(-3px) scale(1.06);
-}
-
-@keyframes pin-drop {
-  from {
-    opacity: 0;
-    transform: translateY(-16px) scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.dog-pin-head {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  padding: 3px;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #fb923c, #ea580c);
-  box-shadow: 0 6px 14px -4px rgb(0 0 0 / 0.55);
-}
-
-/* Leaflet sets `width: auto` on marker-pane images; out-specify it */
-.leaflet-container .dog-marker .dog-pin-head img {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 2px solid #fff;
-  background: #e7e5e4;
   display: block;
 }
-
-.dog-pin-tail {
-  width: 12px;
-  height: 12px;
-  margin-top: -7px;
-  background: #ea580c;
-  transform: rotate(45deg);
-  border-radius: 0 0 3px 0;
-  box-shadow: 3px 3px 6px -2px rgb(0 0 0 / 0.4);
-}
-
-.dog-pin-label {
-  position: absolute;
-  top: 100%;
-  margin-top: 4px;
-  padding: 2px 8px;
+.dog-pin .av {
+  width: 42px;
+  height: 42px;
   border-radius: 9999px;
-  background: rgb(28 25 23 / 0.82);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
-}
-
-.dog-pin-pulse {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: #f97316;
-  opacity: 0;
-  z-index: -1;
-}
-
-.dog-pin.is-selected .dog-pin-head {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #fde047, #f97316);
-}
-
-.dog-pin.is-selected .dog-pin-tail {
-  background: #f97316;
-}
-
-.dog-pin.is-selected .dog-pin-label {
-  background: #f97316;
-}
-
-.dog-pin.is-selected .dog-pin-pulse {
-  animation: pulse-ring 1.8s ease-out infinite;
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(1);
-    opacity: 0.55;
-  }
-  100% {
-    transform: scale(2.1);
-    opacity: 0;
-  }
-}
-
-.dog-pin-met {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
+  overflow: hidden;
+  background: var(--color-soft);
+  color: var(--color-muted);
   display: grid;
   place-items: center;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--ring, var(--color-stale)), 0 6px 14px rgb(0 0 0 / 0.25);
+  transition: transform 0.18s ease;
+}
+.dog-pin .av { position: relative; }
+.dog-pin .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dog-pin .av svg { width: 70%; height: 70%; }
+.dog-marker:hover .av { transform: scale(1.08); }
+.dog-pin .lbl {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  font: 700 11px/1 var(--font-sans);
+  background: #fff;
+  color: var(--color-ink);
+  padding: 4px 8px;
+  border-radius: 9999px;
+  box-shadow: var(--shadow-soft);
+  white-space: nowrap;
+}
+.dog-pin .lbl { display: none; }
+.show-labels .dog-pin .lbl,
+.dog-pin.is-selected .lbl,
+.dog-pin.is-missing .lbl { display: block; }
+.dog-pin.f-fresh { --ring: var(--color-ok); }
+.dog-pin.f-recent { --ring: var(--color-warn); }
+.dog-pin.f-stale .av,
+.dog-pin.f-unknown .av { opacity: 0.8; }
+.dog-pin.is-selected .av { width: 54px; height: 54px; animation: pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.dog-pin.is-selected .lbl { background: var(--color-blaze); color: #fff; }
+.dog-pin.is-missing .lbl { background: var(--color-bad); color: #fff; }
+
+.user-dot {
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background: #16a34a;
-  border: 2px solid #fff;
-  color: #fff;
-}
-
-.dog-cluster {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #fb923c, #ea580c);
+  background: var(--color-locate);
   border: 3px solid #fff;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 0 0 0 6px rgb(249 115 22 / 0.3), 0 8px 18px -6px rgb(0 0 0 / 0.5);
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.dog-cluster:hover {
-  transform: scale(1.08);
-}
-
-.user-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 9999px;
-  background: #3b82f6;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 0 rgb(59 130 246 / 0.6), 0 2px 6px rgb(0 0 0 / 0.4);
+  box-shadow: 0 0 0 0 rgb(47 123 255 / 0.5), 0 2px 6px rgb(0 0 0 / 0.35);
   animation: user-pulse 2s ease-out infinite;
 }
-
 @keyframes user-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgb(59 130 246 / 0.6), 0 2px 6px rgb(0 0 0 / 0.4);
-  }
-  100% {
-    box-shadow: 0 0 0 16px rgb(59 130 246 / 0), 0 2px 6px rgb(0 0 0 / 0.4);
-  }
+  to { box-shadow: 0 0 0 14px rgb(47 123 255 / 0), 0 2px 6px rgb(0 0 0 / 0.35); }
 }
 
-.landmark-label {
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  width: max-content;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 0.85);
-  color: #44403c;
-  font-size: 11px;
-  font-weight: 600;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
-  pointer-events: none;
-}
-
-.landmark-label::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: #f97316;
-}
-
-/* ---------- Leaflet tweaks ---------- */
-
-.leaflet-container {
-  font-family: inherit;
-  background: #1c1917;
-}
-
-.leaflet-control-attribution {
-  font-size: 10px;
-  border-radius: 6px 0 0 0;
-  background: rgb(255 255 255 / 0.7) !important;
-}
+.maplibregl-ctrl-attrib { font-size: 10px; }
+.maplibregl-ctrl-bottom-right, .maplibregl-ctrl-bottom-left { z-index: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .is-intro .dog-pin,
-  .dog-pin.is-selected,
-  .dog-pin-pulse,
-  .animate-sheet,
-  .animate-fade-in,
-  .user-dot {
-    animation: none !important;
-  }
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }

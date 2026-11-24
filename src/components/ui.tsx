@@ -1,178 +1,189 @@
 "use client";
 
-import { useEffect } from "react";
-import { TEMPERAMENTS } from "@/config/site";
-import type { Temperament } from "@/types/dog";
+import { useEffect, useRef, useState } from "react";
+import { freshnessOf, TEMPERAMENTS, type Freshness, type Temperament } from "@/config/site";
+import { timeAgo } from "@/lib/geo";
+import type { Dog } from "@/types/dog";
+import { DogGlyph, XIcon } from "./icons";
 
-export function Dialog({
-  title,
-  onClose,
-  children,
-  wide,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  wide?: boolean;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="animate-fade-in fixed inset-0 z-[2000] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`animate-sheet flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl dark:bg-stone-900 sm:rounded-3xl ${
-          wide ? "sm:max-w-2xl" : "sm:max-w-md"
-        }`}
-      >
-        <div className="flex items-center justify-between border-b border-stone-900/5 px-5 py-4 dark:border-white/5">
-          <h2 className="text-lg font-bold text-stone-900 dark:text-white">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-8 w-8 place-items-center rounded-full text-stone-500 transition hover:bg-stone-900/5 dark:hover:bg-white/10"
-          >
-            <Icon d="M18 6 6 18M6 6l12 12" />
-          </button>
-        </div>
-        <div className="scrollbar-thin overflow-y-auto p-5">{children}</div>
-      </div>
-    </div>
-  );
+export function cx(...c: (string | false | null | undefined)[]) {
+  return c.filter(Boolean).join(" ");
 }
 
-export function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={d} />
-    </svg>
-  );
-}
-
-export const inputClass =
-  "w-full rounded-xl border border-stone-900/10 bg-white px-3 py-2 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30 dark:border-white/10 dark:bg-white/5 dark:text-white";
-
-export function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-semibold text-stone-600 dark:text-stone-300">
-        {label}
-      </span>
-      {children}
-      {hint && <span className="mt-1 block text-xs text-stone-400">{hint}</span>}
-    </label>
-  );
-}
+type BtnVariant = "primary" | "secondary" | "pine" | "ghost" | "danger" | "soft";
 
 export function Button({
   variant = "primary",
-  className = "",
+  size = "md",
+  className,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
-}) {
-  const styles = {
-    primary:
-      "bg-orange-500 text-white shadow-md shadow-orange-500/30 hover:bg-orange-600",
-    secondary:
-      "border border-stone-900/10 bg-white/60 text-stone-800 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10",
-    ghost: "text-stone-600 hover:bg-stone-900/5 dark:text-stone-300 dark:hover:bg-white/10",
-    danger: "bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400",
-  }[variant];
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; size?: "sm" | "md" | "lg" }) {
   return (
     <button
       type="button"
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 ${styles} ${className}`}
+      className={cx(
+        "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
+        size === "sm" && "h-9 px-3.5 text-sm",
+        size === "md" && "h-11 px-5 text-[15px]",
+        size === "lg" && "h-12 px-6 text-base",
+        variant === "primary" && "bg-blaze text-white shadow-soft hover:bg-blaze-2",
+        variant === "pine" && "bg-pine text-mist shadow-soft hover:bg-pine-2",
+        variant === "secondary" && "border border-line bg-white text-ink shadow-soft hover:bg-mist",
+        variant === "soft" && "bg-soft text-ink hover:bg-lichen/60",
+        variant === "ghost" && "text-ink hover:bg-soft",
+        variant === "danger" && "bg-bad/10 text-bad hover:bg-bad/15",
+        className
+      )}
       {...props}
     />
   );
 }
 
-const TONE: Record<string, string> = {
-  good: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  info: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  warn: "bg-amber-500/20 text-amber-800 dark:text-amber-300",
+/** Bottom sheet on phones, centred dialog on larger screens. */
+export function Sheet({
+  title,
+  onClose,
+  children,
+  footer,
+  wide,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  wide?: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    ref.current?.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div
+      className="anim-fade fixed inset-0 z-[60] flex items-end justify-center bg-ink/45 sm:items-center sm:p-6"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        ref={ref}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={cx(
+          "anim-sheet flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-card outline-none sm:rounded-[24px]",
+          wide ? "sm:max-w-2xl" : "sm:max-w-md"
+        )}
+      >
+        <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-4">
+          <h2 className="font-display text-xl font-extrabold">{title}</h2>
+          <button onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full bg-soft text-ink hover:bg-line">
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">{children}</div>
+        {footer && <div className="safe-bottom border-t border-line px-5 py-3">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+export function DogAvatar({ dog, className = "h-11 w-11", dim }: { dog: Pick<Dog, "cover" | "name">; className?: string; dim?: boolean }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [dog.cover]);
+  return (
+    <span className={cx("grid shrink-0 place-items-center overflow-hidden rounded-full bg-soft text-muted", dim && "opacity-75", className)}>
+      {dog.cover && !broken ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={dog.cover} alt="" className="h-full w-full object-cover" loading="lazy" onError={() => setBroken(true)} />
+      ) : (
+        <DogGlyph className="h-[70%] w-[70%]" />
+      )}
+    </span>
+  );
+}
+
+/** Photo that falls back to a placeholder if the file is missing. */
+export function DogPhoto({ src, alt, className }: { src: string | null; alt: string; className?: string }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [src]);
+  if (!src || broken) {
+    return (
+      <div className={cx("grid place-items-center bg-gradient-to-br from-lichen to-pine-2 text-white", className)}>
+        <DogGlyph className="h-28 w-28 drop-shadow" />
+      </div>
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} className={cx("object-cover", className)} onError={() => setBroken(true)} />;
+}
+
+const FRESH_DOT: Record<Freshness, string> = {
+  fresh: "bg-ok",
+  recent: "bg-warn",
+  stale: "bg-stale",
+  unknown: "bg-stale",
 };
 
-export function TemperamentBadge({ value }: { value: Temperament }) {
+export function FreshDot({ iso, className }: { iso: string | null; className?: string }) {
+  return <span className={cx("inline-block h-2 w-2 shrink-0 rounded-full", FRESH_DOT[freshnessOf(iso)], className)} />;
+}
+
+export function seenText(iso: string | null) {
+  return iso ? `Seen ${timeAgo(iso)}` : "No recent sightings";
+}
+
+/** Re-renders every 30 s so "12 min ago" labels stay current. */
+export function useNow(intervalMs = 30_000) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(t);
+  }, [intervalMs]);
+  return now;
+}
+
+const TONE = {
+  good: "bg-ok/12 text-ok",
+  info: "bg-locate/10 text-locate",
+  warn: "bg-warn/15 text-[#8a5c00]",
+};
+
+export function TemperamentTag({ value }: { value: Temperament }) {
   const t = TEMPERAMENTS[value];
   if (!t) return null;
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${TONE[t.tone]}`}
-    >
-      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+    <span className={cx("inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold", TONE[t.tone])}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
       {t.label}
     </span>
   );
 }
 
-export function TemperamentPicker({
-  value,
-  onChange,
-}: {
-  value: Temperament[];
-  onChange: (v: Temperament[]) => void;
-}) {
+export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {(Object.keys(TEMPERAMENTS) as Temperament[]).map((key) => {
-        const on = value.includes(key);
-        const t = TEMPERAMENTS[key];
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={on}
-            onClick={() => onChange(on ? value.filter((v) => v !== key) : [...value, key])}
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-              on
-                ? TONE[t.tone] + " ring-1 ring-current"
-                : "bg-stone-900/5 text-stone-500 hover:bg-stone-900/10 dark:bg-white/5 dark:text-stone-400"
-            }`}
-          >
-            {t.label}
-          </button>
-        );
-      })}
-    </div>
+    <label className="block">
+      <span className="mb-1.5 block text-[13px] font-semibold text-ink">{label}</span>
+      {children}
+      {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
+    </label>
   );
 }
 
-export function Toast({ message }: { message: string | null }) {
-  if (!message) return null;
+export const inputClass =
+  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-[15px] text-ink outline-none transition placeholder:text-stale focus:border-pine focus:ring-2 focus:ring-pine/15";
+
+export function Spinner({ className = "h-5 w-5" }: { className?: string }) {
+  return <span className={cx("inline-block animate-spin rounded-full border-2 border-current border-r-transparent", className)} />;
+}
+
+export function Empty({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
-    <div className="animate-sheet pointer-events-none fixed inset-x-0 bottom-6 z-[3000] flex justify-center px-4">
-      <div className="rounded-full bg-stone-900/90 px-4 py-2 text-sm font-medium text-white shadow-lg backdrop-blur">
-        {message}
-      </div>
+    <div className="grid justify-items-center gap-2 rounded-card border border-dashed border-line bg-white/60 px-6 py-10 text-center">
+      <DogGlyph className="h-10 w-10 text-stale" face={false} />
+      <p className="font-display text-lg font-extrabold">{title}</p>
+      {children && <div className="max-w-sm text-sm text-muted">{children}</div>}
     </div>
   );
 }

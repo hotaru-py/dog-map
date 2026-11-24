@@ -1,69 +1,65 @@
 # SNUC Dog Tracker
 
-A map of the dogs living on the SNU Chennai campus: where they hang out, how to approach them, their health
-and feeding details, and a way for students to help look after them.
+A campus map of the SNU Chennai dogs, kept fresh by students. This is the demo build.
 
-The dogs in `src/data/dogs.json` are **sample data**. Replace them with your campus's dogs.
+- **Map:** every dog at its last-seen spot, with a freshness ring (green under 1 h, amber under 24 h). Search and filter, and see how far each dog is from you.
+- **Update last seen:** spotted a dog? Drop a pin within 60 m of your GPS position and the map updates for everyone.
+- **Check in:** within 25 m of a dog, check in to add it to your Pack Book. XP, levels, streaks and badges are saved on your phone. There's no sign-in.
+- **Navigate to dogs:** a tilted 3D view that turns with your phone and shows each dog as a floating 3D token over its last-seen spot.
 
-## Features
+Developed by [Prajesh Raam](https://byhotaru.com).
 
-| Feature | Switch | Works without a backend? |
-| --- | --- | --- |
-| Dog pins with photos, clustering when zoomed out | `CLUSTERING` | Yes |
-| Dog card: temperament, health, feeding, caretakers, hangouts | | Yes |
-| Search and sort (A–Z, near me, popular, recently seen) | | Yes |
-| "Near me": GPS location, distances, nearby count | `NEARBY` | Yes |
-| Dog of the week (rotates weekly or pinned) | | Yes |
-| Collection and badges ("I've met this dog") | `COLLECTION` | Yes (per device) |
-| Likes | `LIKES` | Device only |
-| Community photo wall | `PHOTO_WALL` | Device only |
-| Report a concern | `REPORTS` | Device only, plus email if `WELFARE_EMAIL` is set |
-| Add a dog (goes to moderation) | `SUBMISSIONS` | Moderated on the same device |
-| Live sightings, "last seen", trail | `SIGHTINGS` (**off**) | Needs a backend to be useful |
-| Hangout zones from sightings | `HANGOUTS` | Needs sightings |
-| Campus landmarks layer | `LANDMARKS` | Yes (`src/data/landmarks.json`) |
-| Admin page `/admin`: moderation, reports, dog editor, photo removal | | Yes (export `dogs.json`) |
-| Installable PWA, works offline | | Yes |
-
-Turn a feature on or off with `NEXT_PUBLIC_FEATURE_<NAME>=true|false` (see `.env.example`).
-
-## Running
+## Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000. The admin page is at http://localhost:3000/admin.
+Open http://localhost:3000. With no configuration the app uses an embedded Postgres database (PGlite) in `.data/`, seeded with the dogs in `src/data/dogs.json`.
 
-## With or without a backend
+Location and compass need HTTPS on phones (or `localhost`).
 
-The app talks to data only through the `DataSource` interface in
-[`src/lib/data/types.ts`](src/lib/data/types.ts). Which implementation is used depends on
-`NEXT_PUBLIC_API_URL`:
+## Deploy to Vercel
 
-1. **No backend (default).** Leave `NEXT_PUBLIC_API_URL` unset. Dogs come from
-   `src/data/dogs.json`. Likes, photos, reports and submissions are saved in each visitor's
-   browser. Moderators edit dogs at `/admin`, click **Export dogs.json**, and commit the file.
-   This can be deployed as a static site anywhere.
-2. **Bundled reference backend.** Set `NEXT_PUBLIC_API_URL=/api` and `ADMIN_TOKEN=<long random
-   string>`. Data is kept in `.data/db.json`. This needs a Node server with a writable disk
-   (`npm run build && npm start` on a VM, Railway, Render, and similar). It won't work on Vercel.
-3. **Your own backend.** Implement [docs/API.md](docs/API.md) on any stack and set
-   `NEXT_PUBLIC_API_URL` to it.
+1. Import the repo in Vercel. The defaults work: framework Next.js, `npm run build`.
+2. Deploy.
 
-To turn on sightings once a backend is connected:
+With no environment variables, the demo stores its data in the embedded database under `/tmp` on Vercel. That works, but **data resets** whenever Vercel starts a fresh server instance, and separate instances don't share updates. That's fine for a demo.
 
-```env
-NEXT_PUBLIC_API_URL=/api
-ADMIN_TOKEN=change-me
-NEXT_PUBLIC_FEATURE_SIGHTINGS=true
+To keep data between visits, add a free Postgres database (Supabase or Neon) and set:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | The database connection string (for Supabase, use the pooler on port 6543) |
+| `DATABASE_SSL` | `true` |
+
+Tables are created and the dogs are seeded automatically on first request.
+
+Optional: `NEXT_PUBLIC_MAP_STYLE_URL` to use a different MapLibre map style (default: OpenFreeMap Liberty, free and keyless).
+
+## API
+
+All routes are in `src/app/api/v2/[...path]/route.ts`. Requests from the app send `X-Device-Id`, a random ID kept on the phone and used only for rate limits.
+
+| Method | Path | Body | Notes |
+| --- | --- | --- | --- |
+| GET | `/api/v2/health` | | `{ ok, database }` |
+| GET | `/api/v2/dogs` | | all dogs with last-seen position |
+| GET | `/api/v2/dogs/:id` | | one dog with recent sightings |
+| POST | `/api/v2/spot` | `{ dogId, point: {lat,lng}, fix: {lat,lng,accuracy}, note? }` | GPS accuracy ≤ 50 m, pin within 60 m of you, inside campus, once per dog per 10 min, 30 per day |
+| POST | `/api/v2/checkin` | `{ dogId, fix: {lat,lng,accuracy} }` | within 25 m, accuracy ≤ 30 m, once per dog per day, paused when 5+ people checked in within 10 min |
+
+## Project layout
+
+```
+src/
+  app/(app)/          map (/), pack, me
+  app/api/v2/         API route handler
+  components/         map, dog panel, spot flow, navigate (3D), app shell
+  server/             database (pg or PGlite), migrations, seed, dog queries, API handlers
+  lib/                API client, on-phone progress and XP, geo maths, schemas
+  config/site.ts      campus bounds, rules, temperaments
 ```
 
-## Customising
-
-- **Campus location, bounds, tiles, links:** [`src/config/site.ts`](src/config/site.ts)
-- **Dogs:** [`src/data/dogs.json`](src/data/dogs.json) (schema in [`src/types/dog.ts`](src/types/dog.ts))
-- **Landmarks:** [`src/data/landmarks.json`](src/data/landmarks.json), for example
-  `[{ "name": "Library", "lat": 12.75, "lng": 80.19 }]`
-- **Temperament labels:** `TEMPERAMENTS` in `src/config/site.ts`
+`postinstall`, `predev` and `prebuild` copy MapLibre's web worker into `public/maplibre/`, because Next can't bundle it.

@@ -1,14 +1,14 @@
-/* Campus Dog Map service worker: makes the app installable and usable offline. */
-const VERSION = "v1";
+/* SNUC Dog Tracker service worker: installable app, works with a patchy campus connection. */
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
-const MAX_RUNTIME_ENTRIES = 400;
+const MAX_RUNTIME_ENTRIES = 600;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(SHELL)
-      .then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon.svg", "/icon-192.png"]))
+      .then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon.svg", "/icon-192.png", "/maplibre/maplibre-gl-worker.mjs"]))
       .then(() => self.skipWaiting())
   );
 });
@@ -22,10 +22,10 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-async function trim(cacheName, max) {
-  const cache = await caches.open(cacheName);
+async function trim() {
+  const cache = await caches.open(RUNTIME);
   const keys = await cache.keys();
-  for (let i = 0; i < keys.length - max; i++) await cache.delete(keys[i]);
+  for (let i = 0; i < keys.length - MAX_RUNTIME_ENTRIES; i++) await cache.delete(keys[i]);
 }
 
 async function networkFirst(request, cacheName) {
@@ -35,15 +35,15 @@ async function networkFirst(request, cacheName) {
     if (res.ok) cache.put(request, res.clone());
     return res;
   } catch {
-    return (await cache.match(request)) || (await caches.match("/")) || Response.error();
+    return (await cache.match(request)) || (request.mode === "navigate" ? await caches.match("/") : undefined) || Response.error();
   }
 }
 
-async function cacheFirst(request) {
+async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;
   const res = await fetch(request);
-  if (res.ok) (await caches.open(SHELL)).put(request, res.clone());
+  if (res.ok) (await caches.open(cacheName)).put(request, res.clone()).then(trim);
   return res;
 }
 
@@ -52,12 +52,10 @@ async function staleWhileRevalidate(request) {
   const cached = await cache.match(request);
   const network = fetch(request)
     .then((res) => {
-      if (res.ok || res.type === "opaque") {
-        cache.put(request, res.clone()).then(() => trim(RUNTIME, MAX_RUNTIME_ENTRIES));
-      }
+      if (res.ok) cache.put(request, res.clone()).then(trim);
       return res;
     })
-    .catch(() => cached);
+    .catch(() => cached || Response.error());
   return cached || network;
 }
 
@@ -66,23 +64,19 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  // Page navigations: fresh when online, cached app shell when offline
   if (request.mode === "navigate") {
     event.respondWith(networkFirst(request, SHELL));
     return;
   }
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/_next/static/")) {
-      event.respondWith(cacheFirst(request));
-    } else if (url.pathname === "/api/dogs" || url.pathname === "/api/likes") {
-      event.respondWith(networkFirst(request, RUNTIME));
-    }
+    if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/maplibre/")) event.respondWith(cacheFirst(request, SHELL));
+    else if (url.pathname === "/api/v2/dogs" || /^\/api\/v2\/dogs\/\d+$/.test(url.pathname)) event.respondWith(networkFirst(request, RUNTIME));
     return;
   }
 
-  // Map tiles and dog photos from other origins
-  if (request.destination === "image") {
+  // Map style, tiles, fonts and sprites, plus dog photos from other hosts
+  if (url.hostname.endsWith("openfreemap.org") || request.destination === "image") {
     event.respondWith(staleWhileRevalidate(request));
   }
 });

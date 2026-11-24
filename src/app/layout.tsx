@@ -1,43 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import ServiceWorker from "@/components/ServiceWorker";
+import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { site } from "@/config/site";
+import ServiceWorker from "@/components/ServiceWorker";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"], weight: ["600", "800"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: site.name,
-  description: "Find and meet the dogs around the SNU Chennai campus.",
-  icons: { icon: "/icon.svg" },
-  appleWebApp: { capable: true, title: site.shortName, statusBarStyle: "black-translucent" },
+  description: "Find the SNUC campus dogs, keep their last-seen spot fresh, and look out for them.",
+  icons: { icon: "/icon.svg", apple: "/icon-192.png" },
+  appleWebApp: { capable: true, title: site.shortName, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f97316",
+  themeColor: "#13392d",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" className={`${bricolage.variable} ${inter.variable}`}>
+      <body className="antialiased">
         {children}
         <ServiceWorker />
       </body>

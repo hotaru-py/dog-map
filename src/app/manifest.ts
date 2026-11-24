@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Find and meet the dogs around the SNU Chennai campus.",
     start_url: "/",
     display: "standalone",
-    background_color: "#1c1917",
-    theme_color: "#f97316",
+    background_color: "#eef2eb",
+    theme_color: "#13392d",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png" },

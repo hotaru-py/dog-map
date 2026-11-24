@@ -1,42 +1,108 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { readJson, writeJson } from "@/lib/storage";
+import { useEffect, useState } from "react";
 
 /**
- * Per-device state for the visitor: dogs they've met, likes, and counters for
- * badges. Always stored locally; no account needed.
+ * Progress lives on the phone: no accounts, nothing ranked. The server only says
+ * when something counts (fresh intel on a spot update).
  */
 export interface Progress {
-  met: Record<number, string>; // dogId -> ISO date first met
-  liked: number[];
-  photos: number;
-  reports: number;
-  sightings: number;
+  v: 1;
+  xp: number;
+  /** dogId -> ISO date first met (checked in) */
+  met: Record<string, string>;
+  /** dogId -> YYYY-MM-DD of last check-in XP */
+  checkins: Record<string, string>;
+  streak: { count: number; last: string | null; freezeWeek: string | null };
+  counts: { spots: number };
 }
 
-const KEY = "progress";
-const EMPTY: Progress = { met: {}, liked: [], photos: 0, reports: 0, sightings: 0 };
+export const XP = {
+  spot: 10,
+  freshIntel: 10,
+  checkin: 5,
+  streakPerDay: 5,
+  streakCap: 50,
+};
+
+const KEY = "snuc:progress";
+const EMPTY: Progress = {
+  v: 1,
+  xp: 0,
+  met: {},
+  checkins: {},
+  streak: { count: 0, last: null, freezeWeek: null },
+  counts: { spots: 0 },
+};
+
+export const today = (d = new Date()) => d.toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
+const dayOffset = (n: number) => today(new Date(Date.now() - n * 86400_000));
+const isoWeek = (d = new Date()) => {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const y = t.getUTCFullYear();
+  return `${y}-W${Math.ceil(((t.getTime() - Date.UTC(y, 0, 1)) / 86400_000 + 1) / 7)}`;
+};
+
+export function loadProgress(): Progress {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? { ...EMPTY, ...(JSON.parse(raw) as Progress) } : EMPTY;
+  } catch {
+    return EMPTY;
+  }
+}
+
 const listeners = new Set<(p: Progress) => void>();
 
-export function useProgress() {
-  const [progress, setProgress] = useState<Progress>(EMPTY);
+export function saveProgress(p: Progress) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(p));
+  } catch {
+    /* storage full or blocked: progress just won't persist */
+  }
+  listeners.forEach((l) => l(p));
+}
 
+export function useProgress() {
+  const [p, setP] = useState<Progress>(EMPTY);
   useEffect(() => {
-    setProgress({ ...EMPTY, ...readJson<Progress>(KEY, EMPTY) });
-    listeners.add(setProgress);
+    setP(loadProgress());
+    listeners.add(setP);
     return () => {
-      listeners.delete(setProgress);
+      listeners.delete(setP);
     };
   }, []);
+  return p;
+}
 
-  const update = useCallback((fn: (p: Progress) => Progress) => {
-    const next = fn({ ...EMPTY, ...readJson<Progress>(KEY, EMPTY) });
-    writeJson(KEY, next);
-    listeners.forEach((l) => l(next));
-  }, []);
+/** Applies an XP-earning action, updating the daily streak. Returns XP gained (including streak bonus). */
+export function earn(amount: number, mutate?: (p: Progress) => Progress): number {
+  let p = loadProgress();
+  if (mutate) p = mutate(p);
+  let gained = amount;
+  const t = today();
+  const s = { ...p.streak };
+  if (s.last !== t) {
+    if (s.last === dayOffset(1)) s.count += 1;
+    else if (s.last === dayOffset(2) && s.freezeWeek !== isoWeek()) {
+      s.count += 1;
+      s.freezeWeek = isoWeek();
+    } else s.count = 1;
+    s.last = t;
+    gained += Math.min(XP.streakCap, XP.streakPerDay * s.count);
+  }
+  saveProgress({ ...p, xp: p.xp + gained, streak: s });
+  return gained;
+}
 
-  return { progress, update };
+/** Level n needs 50·n² XP in total. */
+export function levelInfo(xp: number) {
+  const level = Math.max(1, Math.floor(Math.sqrt(xp / 50)));
+  const next = 50 * (level + 1) ** 2;
+  const start = level === 1 ? 0 : 50 * level ** 2;
+  const title = level < 3 ? "Pup" : level < 6 ? "Sniffer" : level < 10 ? "Tracker" : level < 15 ? "Ranger" : "Pack Leader";
+  return { level, title, next, progress: Math.min(1, (xp - start) / (next - start)) };
 }
 
 export interface Badge {
@@ -46,40 +112,12 @@ export interface Badge {
   earned: boolean;
 }
 
-export function computeBadges(
-  p: Progress,
-  totalDogs: number,
-  opts: { sightings: boolean; photos: boolean; reports: boolean }
-): Badge[] {
+export function badgesFor(p: Progress, activeDogs: number): Badge[] {
   const met = Object.keys(p.met).length;
-  const badges: (Badge | false)[] = [
-    { id: "first", name: "First Friend", hint: "Meet your first dog", earned: met >= 1 },
+  return [
+    { id: "first", name: "First Friend", hint: "Check in with your first dog", earned: met >= 1 },
     { id: "pack", name: "Pack Member", hint: "Meet 5 dogs", earned: met >= 5 },
-    {
-      id: "all",
-      name: "Top Dog",
-      hint: "Meet every dog on campus",
-      earned: totalDogs > 0 && met >= totalDogs,
-    },
-    { id: "fan", name: "Big Fan", hint: "Like 3 dogs", earned: p.liked.length >= 3 },
-    opts.photos && {
-      id: "photo",
-      name: "Shutterbug",
-      hint: "Share a photo",
-      earned: p.photos >= 1,
-    },
-    opts.reports && {
-      id: "care",
-      name: "Guardian",
-      hint: "Report a dog that needs help",
-      earned: p.reports >= 1,
-    },
-    opts.sightings && {
-      id: "scout",
-      name: "Scout",
-      hint: "Log 10 sightings",
-      earned: p.sightings >= 10,
-    },
+    { id: "top", name: "Top Dog", hint: "Meet every dog on campus", earned: activeDogs > 0 && met >= activeDogs },
+    { id: "scout", name: "Scout", hint: "Update 10 last-seen spots", earned: p.counts.spots >= 10 },
   ];
-  return badges.filter((b): b is Badge => Boolean(b));
 }
